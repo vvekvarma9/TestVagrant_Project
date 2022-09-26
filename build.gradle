@@ -10,10 +10,60 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    //junit dependency
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "latest.integration"
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "latest.integration"
+
+    //selenium dependency
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: "latest.integration"
+
+    //Webdriver Manager
+    implementation group: 'io.github.bonigarcia', name: 'webdrivermanager', version: "latest.integration"
+
+    //cucumber dependency
+    implementation group: 'io.cucumber', name: 'cucumber-java', version: "latest.integration"
+    implementation group: 'io.cucumber', name: 'cucumber-picocontainer', version: "latest.integration"
+    implementation group: 'io.cucumber', name: 'cucumber-junit', version: "latest.integration"
+    implementation group: 'net.masterthought', name: 'cucumber-reporting', version: "latest.integration"
+    implementation group: 'io.cucumber', name: 'cucumber-testng', version: "latest.integration"
+
+    //testNG dependency
+    implementation group: 'org.testng', name: 'testng', version: "latest.integration"
+
+    //SLF4J dependency
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: "latest.integration"
+    implementation group: 'org.slf4j', name: 'slf4j-reload4j', version: "latest.integration"
+
+    //Json dependency
+    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: "latest.integration"
 }
 
 test {
     useJUnitPlatform()
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+def tags = (findProperty('tags') == null) ? 'not @Ignore' : findProperty('tags') + ' and not @Ignore'
+
+task cucumberTest() {
+    dependsOn assemble, testClasses
+    doLast {
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.test.output
+            args = [
+                    '-p', 'pretty',
+                    '-p', 'html:target/reports/cucumber-reports.html',
+                    '-p', 'json:target/reports/result.json',
+                    '--glue', 'steps', 'src/test/resources/features',
+                    '--tags', "${tags}"
+            ]
+        }
+    }
 }
